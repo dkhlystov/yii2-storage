@@ -9,6 +9,14 @@ interface StorageInterface
 {
 
 	/**
+	 * Saving uploaded file in temporary directory.
+	 * @param string $name Form name of uploaded file.
+	 * @param string[]|null $types File types allowed to uploading. If null - type of uploaded file is not checked.
+	 * @return string|false Public name of uploaded file in temporary directory.
+	 */
+	public function prepare($name, $types = null);
+
+	/**
 	 * Sore file with $name into storage.
 	 * @param string $name File name relative to web root
 	 * @return string|false Name under which the file will be available in application

@@ -5,6 +5,7 @@ namespace storage\components;
 use Yii;
 use yii\base\Component;
 use yii\base\BootstrapInterface;
+use yii\web\UploadedFile;
 
 /**
  * Base class implementing StorageInterface for sore files.
@@ -66,7 +67,7 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	 */
 	protected function generateUniqueName()
 	{
-		return uniqid('', true);
+		return str_replace('.', '', uniqid('', true));
 	}
 
 	/**
@@ -90,13 +91,35 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	 * @param string $name Original name of uploaded file.
 	 * @return string
 	 */
-	public function generateTmpName($name)
+	protected function generateTmpName($name)
 	{
 		$filename = $this->tmpPath . '/' . $this->generateUniqueName();
 
 		$ext = pathinfo($name, PATHINFO_EXTENSION);
 		if (!empty($ext))
 			$filename .= '.' . $ext;
+
+		return $filename;
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function prepare($name, $types = null)
+	{
+		$file = UploadedFile::getInstanceByName($name);
+		if ($file === null)
+			return false;
+
+		if (is_array($types)) {
+			$type = strtolower($file->type);
+			if (!in_array($type, $types))
+				return false;
+		}
+
+		$filename = $this->generateTmpName($file->name);
+
+		$file->saveAs(Yii::getAlias('@webroot') . $filename);
 
 		return $filename;
 	}
