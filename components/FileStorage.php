@@ -2,6 +2,8 @@
 
 namespace storage\components;
 
+use Yii;
+
 class FileStorage extends BaseStorage
 {
 
@@ -15,7 +17,7 @@ class FileStorage extends BaseStorage
 	 */
 	protected function readContents($id)
 	{
-		return @file_get_contents(Yii::getAlias($storagePath) . '/' . $id);
+		return @file_get_contents(Yii::getAlias($this->storagePath) . '/' . $id);
 	}
 
 	/**
@@ -24,7 +26,7 @@ class FileStorage extends BaseStorage
 	protected function writeContents($contents)
 	{
 		$id = $this->generateUniqueName();
-		$r = @file_put_contents(Yii::getAlias($storagePath) . '/' . $id, $contents);
+		$r = @file_put_contents(Yii::getAlias($this->storagePath) . '/' . $id, $contents);
 
 		if ($r === false)
 			return false;

@@ -4,11 +4,12 @@ namespace storage\components;
 
 use Yii;
 use yii\base\Component;
+use yii\base\BootstrapInterface;
 
 /**
  * Base class implementing StorageInterface for sore files.
  */
-abstract class BaseStorage extends Component implements StorageInterface
+abstract class BaseStorage extends Component implements StorageInterface, BootstrapInterface
 {
 
 	/**
@@ -26,21 +27,38 @@ abstract class BaseStorage extends Component implements StorageInterface
 	 * @param string $id Stored file identifier
 	 * @return mixed|false File contents
 	 */
-	protected function readContents($id);
+	abstract protected function readContents($id);
 
 	/**
 	 * Write file contents into storage.
 	 * @param mixed $contents File contents
 	 * @return string|false Stored file identifier
 	 */
-	protected function writeContents($contents);
+	abstract protected function writeContents($contents);
 
 	/**
 	 * Delete contents of stored file.
 	 * @param string $id Stored file identifier
 	 * @return boolean
 	 */
-	protected function removeContents($id);
+	abstract protected function removeContents($id);
+
+	/**
+	 * @inheritdoc
+	 */
+	public function bootstrap($app)
+	{
+		$modules = $app->getModules();
+		$modules['storage'] = 'storage\Module';
+		$app->setModules($modules);
+
+		$app->getUrlManager()->addRules([
+			[
+				'pattern' => $this->publicPath . '/<name:[\w\.]+>',
+				'route' => '/storage/public/index',
+			],
+		], false);
+	}
 
 	/**
 	 * Generate unique name for file.
@@ -49,6 +67,22 @@ abstract class BaseStorage extends Component implements StorageInterface
 	protected function generateUniqueName()
 	{
 		return uniqid('', true);
+	}
+
+	/**
+	 * Parse id from name
+	 * @param string $name File name
+	 * @return string
+	 */
+	protected function name2id($name)
+	{
+		$id = pathinfo($name, PATHINFO_BASENAME);
+
+		if (($i = strrpos($id, '.')) !== false) {
+			$id = substr($id, 0, $i);
+		}
+
+		return $id;
 	}
 
 	/**
@@ -96,7 +130,7 @@ abstract class BaseStorage extends Component implements StorageInterface
 	 */
 	public function remove($name)
 	{
-		$id = pathinfo($name, PATHINFO_BASENAME);
+		$id = $this->name2id($name);
 
 		return $this->removeContents($id);
 	}
@@ -106,7 +140,7 @@ abstract class BaseStorage extends Component implements StorageInterface
 	 */
 	public function cache($name)
 	{
-		$id = pathinfo($name, PATHINFO_BASENAME);
+		$id = $this->name2id($name);
 
 		$contents = $this->readContents($id);
 
