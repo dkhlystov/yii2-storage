@@ -39,7 +39,7 @@ class FileStorage extends BaseStorage
 	 */
 	protected function removeContents($id)
 	{
-		$filename = Yii::getAlias($storagePath) . '/' . $id;
+		$filename = Yii::getAlias($this->storagePath) . '/' . $id;
 
 		if (!file_exists($filename))
 			return true;

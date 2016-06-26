@@ -103,6 +103,38 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	}
 
 	/**
+	 * Filter files, remove all except public
+	 * @param string[] $files 
+	 * @return string[]
+	 */
+	protected function filterPublicFiles($files)
+	{
+		$r = [];
+		foreach ($files as $file) {
+			if (strpos($file, $this->publicPath . '/') === 0)
+				$r[] = $file;
+		}
+
+		return array_unique($r);
+	}
+
+	/**
+	 * Filter files, remove all except tmp
+	 * @param string[] $files 
+	 * @return string[]
+	 */
+	protected function filterTmpFiles($files)
+	{
+		$r = [];
+		foreach ($files as $file) {
+			if (strpos($file, $this->tmpPath . '/') === 0)
+				$r[] = $file;
+		}
+
+		return array_unique($r);
+	}
+
+	/**
 	 * @inheritdoc
 	 */
 	public function prepare($name, $types = null)
@@ -127,7 +159,7 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	/**
 	 * @inheritdoc
 	 */
-	public function store($name)
+	public function store($name, $removeOriginal = true)
 	{
 		$contents = @file_get_contents(Yii::getAlias('@webroot') . $name);
 
@@ -138,6 +170,9 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 
 		if ($id === false)
 			return false;
+
+		if ($removeOriginal)
+			@unlink(Yii::getAlias('@webroot') . $name);
 
 		$filename = $this->publicPath . '/' . $id;
 
@@ -155,7 +190,12 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	{
 		$id = $this->name2id($name);
 
-		return $this->removeContents($id);
+		$removed = $this->removeContents($id);
+
+		if ($removed)
+			@unlink(Yii::getAlias('@webroot') . $name);
+
+		return $removed;
 	}
 
 	/**
@@ -173,6 +213,33 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 		@file_put_contents(Yii::getAlias('@webroot') . $name, $contents);
 
 		return $contents;
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function update($old, $new)
+	{
+		$r = [];
+
+		$oldPublic = $this->filterPublicFiles($old);
+		$newPublic = $this->filterPublicFiles($new);
+
+		//delete old
+		$toDel = array_diff($oldPublic, $newPublic);
+
+		foreach ($toDel as $file) {
+			$this->remove($file);
+		}
+
+		//store new
+		$toStore = $this->filterTmpFiles($new);
+
+		foreach ($toStore as $file) {
+			$r[$file] = $this->store($file);
+		}
+
+		return $r;
 	}
 
 }
