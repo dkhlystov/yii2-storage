@@ -218,28 +218,47 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	/**
 	 * @inheritdoc
 	 */
-	public function update($old, $new)
+	public function storeObject(StoredInterface $object)
 	{
-		$r = [];
+		$old = $object->getOldFiles();
+		$cur = $object->getFiles();
 
 		$oldPublic = $this->filterPublicFiles($old);
-		$newPublic = $this->filterPublicFiles($new);
+		$curPublic = $this->filterPublicFiles($cur);
 
 		//delete old
-		$toDel = array_diff($oldPublic, $newPublic);
+		$toDel = array_diff($oldPublic, $curPublic);
 
 		foreach ($toDel as $file) {
 			$this->remove($file);
 		}
 
 		//store new
-		$toStore = $this->filterTmpFiles($new);
+		$toStore = $this->filterTmpFiles($cur);
 
+		$new = [];
 		foreach ($toStore as $file) {
-			$r[$file] = $this->store($file);
+			$new[$file] = $this->store($file);
 		}
 
-		return $r;
+		$object->setFiles($new);
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function removeObject(StoredInterface $object)
+	{
+		$old = $object->getOldFiles();
+		$cur = $object->getFiles();
+
+		$public = $this->filterPublicFiles(array_merge($old, $cur));
+		$public = array_unique($public);
+
+		//delete all public
+		foreach ($public as $file) {
+			$this->remove($file);
+		}
 	}
 
 }

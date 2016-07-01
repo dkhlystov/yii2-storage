@@ -19,9 +19,10 @@ interface StorageInterface
 	/**
 	 * Sore file with $name into storage.
 	 * @param string $name File name relative to web root.
+	 * @param boolean $removeOriginal Original file will be removed if true.
 	 * @return string|false Name under which the file will be available in application.
 	 */
-	public function store($name);
+	public function store($name, $removeOriginal = true);
 
 	/**
 	 * Remove file from storage and cache.
@@ -38,11 +39,17 @@ interface StorageInterface
 	public function cache($name);
 
 	/**
-	 * Store new files from temporary directory and remove deleted files from storage.
-	 * @param string[] $old Old files.
-	 * @param string[] $new Current files.
+	 * Store new object files from temporary directory and remove deleted object files from storage.
+	 * @param StoredInterface $object 
 	 * @return void
 	 */
-	public function update($old, $new);
+	public function storeObject(StoredInterface $object);
+
+	/**
+	 * Remove all object files from storage.
+	 * @param StoredInterface $object 
+	 * @return void
+	 */
+	public function removeObject(StoredInterface $object);
 
 }
