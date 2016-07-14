@@ -52,4 +52,11 @@ interface StorageInterface
 	 */
 	public function removeObject(StoredInterface $object);
 
+	/**
+	 * Cache all object files from storage.
+	 * @param StoredInterface $object 
+	 * @return void
+	 */
+	public function cacheObject(StoredInterface $object);
+
 }

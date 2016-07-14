@@ -261,4 +261,14 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 		}
 	}
 
+	/**
+	 * @inheritdoc
+	 */
+	public function cacheObject(StoredInterface $object)
+	{
+		foreach ($object->getFiles() as $name) {
+			$this->cache($name);
+		}
+	}
+
 }
