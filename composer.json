@@ -1,6 +1,6 @@
 {
-    "name": "simple-yii2/storage",
-    "description": "File storage extension for Yii PHP Framework Version 2",
+    "name": "dkhlystov/yii2-storage",
+    "description": "File storage extension for Yii 2 framework",
     "type": "yii2-extension",
     "keywords": ["yii2","extension","storage"],
     "license": "BSD-3-Clause",
@@ -15,7 +15,7 @@
     },
     "autoload": {
         "psr-4": {
-            "storage\\": ""
+            "dkhlystov\\storage\\": ""
         }
     }
 }
