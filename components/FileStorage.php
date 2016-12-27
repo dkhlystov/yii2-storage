@@ -1,6 +1,6 @@
 <?php
 
-namespace storage\components;
+namespace dkhlystov\storage\components;
 
 use Yii;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace storage\controllers;
+namespace dkhlystov\storage\controllers;
 
 use Yii;
 use yii\web\Controller;

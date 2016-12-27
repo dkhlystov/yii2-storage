@@ -1,6 +1,6 @@
 <?php
 
-namespace storage\components;
+namespace dkhlystov\storage\components;
 
 use Yii;
 use yii\base\Component;
@@ -50,7 +50,7 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	public function bootstrap($app)
 	{
 		$modules = $app->getModules();
-		$modules['storage'] = 'storage\Module';
+		$modules['storage'] = 'dkhlystov\storage\Module';
 		$app->setModules($modules);
 
 		$app->getUrlManager()->addRules([
