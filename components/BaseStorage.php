@@ -91,7 +91,7 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	 * @param string $name Original name of uploaded file.
 	 * @return string
 	 */
-	protected function generateTmpName($name)
+	public function generateTmpName($name)
 	{
 		$filename = $this->tmpPath . '/' . $this->generateUniqueName();
 
