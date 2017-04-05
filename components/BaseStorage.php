@@ -24,6 +24,11 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	public $tmpPath = '/upload';
 
 	/**
+	 * @var string Prefix is using when application works in subdirectory (not in root directory) on the web-server.
+	 */
+	public $prefix = '';
+
+	/**
 	 * Read file contents from storage.
 	 * @param string $id Stored file identifier
 	 * @return mixed|false File contents
@@ -111,7 +116,7 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	{
 		$r = [];
 		foreach ($files as $file) {
-			if (strpos($file, $this->publicPath . '/') === 0)
+			if (strpos($file, $this->prefix . $this->publicPath . '/') === 0)
 				$r[] = $file;
 		}
 
@@ -127,7 +132,7 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	{
 		$r = [];
 		foreach ($files as $file) {
-			if (strpos($file, $this->tmpPath . '/') === 0)
+			if (strpos($file, $this->prefix . $this->tmpPath . '/') === 0)
 				$r[] = $file;
 		}
 
@@ -153,7 +158,7 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 
 		$file->saveAs(Yii::getAlias('@webroot') . $filename);
 
-		return $filename;
+		return $this->prefix . $filename;
 	}
 
 	/**
@@ -161,6 +166,8 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	 */
 	public function store($name, $removeOriginal = true)
 	{
+		$name = substr($name, strlen($this->prefix));
+
 		$contents = @file_get_contents(Yii::getAlias('@webroot') . $name);
 
 		if ($contents === false)
@@ -180,7 +187,7 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 		if (!empty($ext))
 			$filename .= '.' . $ext;
 
-		return $filename;
+		return $this->prefix . $filename;
 	}
 
 	/**
@@ -188,6 +195,8 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	 */
 	public function remove($name)
 	{
+		$name = substr($name, strlen($this->prefix));
+
 		$id = $this->name2id($name);
 
 		$removed = $this->removeContents($id);
@@ -203,6 +212,8 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	 */
 	public function cache($name)
 	{
+		$name = substr($name, strlen($this->prefix));
+
 		$id = $this->name2id($name);
 
 		$contents = $this->readContents($id);
