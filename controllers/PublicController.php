@@ -16,7 +16,7 @@ class PublicController extends Controller
 	{
 		$storage = Yii::$app->storage;
 
-		$name = $storage->publicPath . '/' . $name;
+		$name = $storage->prefix . $storage->publicPath . '/' . $name;
 
 		$contents = $storage->cache($name);
 
