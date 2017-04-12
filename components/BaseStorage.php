@@ -151,15 +151,13 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 		$base = Yii::getAlias('@webroot');
 
 		$dir = $this->generateTmpName();
-		$filename = $dir . '/' . $file->name;
-
 		if (!file_exists($base . $dir))
 			@mkdir($base . $dir);
 
-		if (!$file->saveAs($base . $filename))
+		if (!$file->saveAs($base . $dir . '/' . $file->name))
 			return false;
 
-		return $this->prefix . $filename;
+		return $this->prefix . $dir . '/' . rawurlencode($file->name);
 	}
 
 	/**
@@ -167,7 +165,8 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	 */
 	public function store($name, $removeOriginal = true)
 	{
-		$name = substr($name, strlen($this->prefix));
+		$name = urldecode($name);
+		$name = substr($name, mb_strlen($this->prefix));
 
 		$base = Yii::getAlias('@webroot');
 
@@ -186,9 +185,8 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 			@rmdir($base . pathinfo($name, PATHINFO_DIRNAME));
 		}
 
-		$filename = $this->publicPath . '/' . $id . strrchr($name, '/');
-
-		return $this->prefix . $filename;
+		$n = substr(strrchr($name, '/'), 1);
+		return $this->prefix . $this->publicPath . '/' . $id . '/' . rawurlencode($n);
 	}
 
 	/**
@@ -196,16 +194,17 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	 */
 	public function remove($name)
 	{
-		$id = $this->name2id($name);
+		$name = urldecode($name);
+		$name = substr($name, mb_strlen($this->prefix));
 
+		$base = Yii::getAlias('@webroot');
+
+		$id = $this->name2id($name);
 		$removed = $this->removeContents($id);
 
 		if ($removed) {
-			$dir = Yii::getAlias('@webroot') . $this->publicPath . '/' . $id;
-			$filename = $dir . strrchr($name, '/');
-			@unlink($filename);
-			@rmdir($dir);
-			
+			@unlink($base . $name);
+			@rmdir($base . pathinfo($name, PATHINFO_DIRNAME));
 		}
 
 		return $removed;
@@ -216,20 +215,22 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	 */
 	public function cache($name)
 	{
-		$id = $this->name2id($name);
+		$name = urldecode($name);
+		$name = substr($name, mb_strlen($this->prefix));
 
+		$base = Yii::getAlias('@webroot');
+
+		$id = $this->name2id($name);
 		$contents = $this->readContents($id);
 
 		if ($contents === false)
 			return false;
 
-		$dir = Yii::getAlias('@webroot') . $this->publicPath . '/' . $id;
-		$filename = $dir . strrchr($name, '/');
-
+		$dir = $base . pathinfo($name, PATHINFO_DIRNAME);
 		if (!file_exists($dir))
 			@mkdir($dir);
 
-		@file_put_contents($filename, $contents);
+		@file_put_contents($base . $name, $contents);
 
 		return $contents;
 	}
@@ -244,6 +245,7 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 
 		$oldPublic = $this->filterPublicFiles($old);
 		$curPublic = $this->filterPublicFiles($cur);
+
 
 		//delete old
 		$toDel = array_diff($oldPublic, $curPublic);
