@@ -12,9 +12,10 @@ use yii\web\NotFoundHttpException;
 class PublicController extends Controller
 {
 
-	public function actionIndex($name)
+	public function actionIndex($name, $d = 0)
 	{
 		$storage = Yii::$app->storage;
+
 
 		$name = $storage->prefix . $storage->publicPath . '/' . $name;
 
@@ -27,8 +28,19 @@ class PublicController extends Controller
 		$mime = @finfo_file($finfo, Yii::getAlias('@webroot') . $name);
 		finfo_close($finfo);
 
-		if ($mime !== false) 
-			header('Content-Type: ' . $mime);
+		if ($d == 1) {
+			header('Content-Description: File Transfer');
+			header('Content-Type: application/octet-stream');
+			header('Content-Transfer-Encoding: binary');
+			header('Connection: Keep-Alive');
+			header('Expires: 0');
+			header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+			header('Pragma: public');
+			header('Content-Length: ' . strlen($contents));
+		} else {
+			if ($mime !== false) 
+				header('Content-Type: ' . $mime);
+		}
 
 		echo $contents;
 

@@ -60,7 +60,7 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 
 		$app->getUrlManager()->addRules([
 			[
-				'pattern' => $this->publicPath . '/<name:[\w\.]+>',
+				'pattern' => $this->publicPath . '/<name:.+>',
 				'route' => '/storage/public/index',
 			],
 		], false);
@@ -82,29 +82,23 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	 */
 	protected function name2id($name)
 	{
-		$id = pathinfo($name, PATHINFO_BASENAME);
+		$id = pathinfo($name, PATHINFO_DIRNAME);
 
-		if (($i = strrpos($id, '.')) !== false) {
-			$id = substr($id, 0, $i);
-		}
+		if ($s = strrchr($id, '/'))
+			$id = substr($s, 1);
 
 		return $id;
 	}
 
 	/**
-	 * Generate temporary file name for files upload.
-	 * @param string $name Original name of uploaded file.
+	 * Generate temporary directory name for files upload.
 	 * @return string
 	 */
-	public function generateTmpName($name)
+	public function generateTmpName()
 	{
-		$filename = $this->tmpPath . '/' . $this->generateUniqueName();
+		$dir = $this->tmpPath . '/' . $this->generateUniqueName();
 
-		$ext = pathinfo($name, PATHINFO_EXTENSION);
-		if (!empty($ext))
-			$filename .= '.' . $ext;
-
-		return $filename;
+		return $dir;
 	}
 
 	/**
@@ -154,9 +148,16 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 				return false;
 		}
 
-		$filename = $this->generateTmpName($file->name);
+		$base = Yii::getAlias('@webroot');
 
-		$file->saveAs(Yii::getAlias('@webroot') . $filename);
+		$dir = $this->generateTmpName();
+		$filename = $dir . '/' . $file->name;
+
+		if (!file_exists($base . $dir))
+			@mkdir($base . $dir);
+
+		if (!$file->saveAs($base . $filename))
+			return false;
 
 		return $this->prefix . $filename;
 	}
@@ -168,7 +169,9 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	{
 		$name = substr($name, strlen($this->prefix));
 
-		$contents = @file_get_contents(Yii::getAlias('@webroot') . $name);
+		$base = Yii::getAlias('@webroot');
+
+		$contents = @file_get_contents($base . $name);
 
 		if ($contents === false)
 			return false;
@@ -178,14 +181,12 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 		if ($id === false)
 			return false;
 
-		if ($removeOriginal)
-			@unlink(Yii::getAlias('@webroot') . $name);
+		if ($removeOriginal) {
+			@unlink($base . $name);
+			@rmdir($base . pathinfo($name, PATHINFO_DIRNAME));
+		}
 
-		$filename = $this->publicPath . '/' . $id;
-
-		$ext = pathinfo($name, PATHINFO_EXTENSION);
-		if (!empty($ext))
-			$filename .= '.' . $ext;
+		$filename = $this->publicPath . '/' . $id . strrchr($name, '/');
 
 		return $this->prefix . $filename;
 	}
@@ -195,14 +196,17 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	 */
 	public function remove($name)
 	{
-		$name = substr($name, strlen($this->prefix));
-
 		$id = $this->name2id($name);
 
 		$removed = $this->removeContents($id);
 
-		if ($removed)
-			@unlink(Yii::getAlias('@webroot') . $name);
+		if ($removed) {
+			$dir = Yii::getAlias('@webroot') . $this->publicPath . '/' . $id;
+			$filename = $dir . strrchr($name, '/');
+			@unlink($filename);
+			@rmdir($dir);
+			
+		}
 
 		return $removed;
 	}
@@ -212,8 +216,6 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	 */
 	public function cache($name)
 	{
-		$name = substr($name, strlen($this->prefix));
-
 		$id = $this->name2id($name);
 
 		$contents = $this->readContents($id);
@@ -221,7 +223,13 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 		if ($contents === false)
 			return false;
 
-		@file_put_contents(Yii::getAlias('@webroot') . $name, $contents);
+		$dir = Yii::getAlias('@webroot') . $this->publicPath . '/' . $id;
+		$filename = $dir . strrchr($name, '/');
+
+		if (!file_exists($dir))
+			@mkdir($dir);
+
+		@file_put_contents($filename, $contents);
 
 		return $contents;
 	}
