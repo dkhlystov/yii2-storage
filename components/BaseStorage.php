@@ -287,8 +287,15 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	 */
 	public function cacheObject(StoredInterface $object)
 	{
-		foreach ($object->getFiles() as $name) {
-			$this->cache($name);
+		$old = $object->getOldFiles();
+		$cur = $object->getFiles();
+
+		$public = $this->filterPublicFiles(array_merge($old, $cur));
+		$public = array_unique($public);
+
+		//cache all public
+		foreach ($public as $file) {
+			$this->cache($file);
 		}
 	}
 
