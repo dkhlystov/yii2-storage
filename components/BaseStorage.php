@@ -84,6 +84,9 @@ abstract class BaseStorage extends Component implements StorageInterface, Bootst
 	{
 		$id = pathinfo($name, PATHINFO_DIRNAME);
 
+		if ($id == $this->publicPath)
+			$id = pathinfo($name, PATHINFO_FILENAME);
+
 		if ($s = strrchr($id, '/'))
 			$id = substr($s, 1);
 
